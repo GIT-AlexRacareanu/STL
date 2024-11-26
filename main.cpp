@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -45,18 +46,19 @@ int main()
         doc_list.push_back(doc);
     }
 
-    for (auto& problem : prb_list)
+    for (int i = 0; i < no_problems; i++)
     {
-        bool isFound = 0;
-        for (auto& doctor : doc_list)
-        {
-            if (problem.speciality == doctor.speciality)
+        auto itr = find_if(begin(doc_list), end(doc_list), [&](struct doctor doc)
             {
-                isFound = 1;
-                break;
-            }
+                return doc.speciality == prb_list[i].speciality;
+            });
+        if (itr != doc_list.end())
+        {
+            cout << itr->name << " " << prb_list[i].name << endl;
+            doc_list.erase(itr);
         }
-        isFound ? cout << problem.name << " Acceptat" << endl : cout << problem.name << " Respins" << endl;
     }
+
+    
     return 0;
 }
