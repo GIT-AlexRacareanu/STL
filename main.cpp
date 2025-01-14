@@ -1,64 +1,96 @@
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include<set>
 
 using namespace std;
+
+
+struct problem
+{
+    string id, speciality;
+    int arrivalTime, cureTime, priority;
+};
+
+struct doctor {
+    string id;
+    int nr_specialities,freeAfter = 9;
+    set<string> specialities;
+    vector<pair<string,int>> cured;
+};
 
 int main()
 {
     ifstream inFile("input.txt");
 
     int no_problems, no_doctors;
-    struct problem
-    {
-        string name, speciality;
-    };
-    
-    
+
+
     inFile >> no_problems;
     vector<struct problem> prb_list;
 
     for (int i = 0; i < no_problems; i++)
     {
         struct problem prb;
-        inFile >> prb.name;
+        inFile >> prb.id;
         inFile >> prb.speciality;
-        cout << prb.name << ' ' << prb.speciality << '\n';
+        inFile >> prb.arrivalTime;
+        inFile >> prb.cureTime;
+        inFile >> prb.priority;
         prb_list.push_back(prb);
     }
 
     inFile >> no_doctors;
-
-    struct doctor {
-        string name, speciality;
-    };
 
     vector<struct doctor> doc_list;
 
     for (int i = 0; i < no_doctors; i++)
     {
         struct doctor doc;
-        inFile >> doc.name;
-        inFile >> doc.speciality;
-        cout << doc.name << ' ' << doc.speciality << '\n';
+        inFile >> doc.id;
+        inFile >> doc.nr_specialities;
+        for (int i = 0; i < doc.nr_specialities; i++)
+        {
+            string speciality;
+            inFile >> speciality;
+            doc.specialities.insert(speciality);
+        }
         doc_list.push_back(doc);
     }
 
-    for (int i = 0; i < no_problems; i++)
-    {
-        auto itr = find_if(begin(doc_list), end(doc_list), [&](struct doctor doc)
-            {
-                return doc.speciality == prb_list[i].speciality;
-            });
-        if (itr != doc_list.end())
+    sort(prb_list.begin(), prb_list.end(), [](auto &prb1, auto &prb2)
         {
-            cout << itr->name << " " << prb_list[i].name << endl;
-            doc_list.erase(itr);
+            if(prb1.arrivalTime == prb2.arrivalTime)
+                return prb1.priority > prb2.priority;            
+            return prb1.arrivalTime < prb2.arrivalTime;
+        });
+    
+    for (auto& prb : prb_list)
+    {
+        auto doctor = find_if(doc_list.begin(), doc_list.end(), [&](struct doctor doc) {
+            return doc.specialities.contains(prb.speciality) && doc.freeAfter <= prb.arrivalTime && doc.freeAfter+prb.cureTime<=17;
+            });
+        if (doctor != doc_list.end())
+        {
+            doctor->freeAfter += prb.cureTime;
+            doctor->cured.push_back(pair<string,int>(prb.id,prb.arrivalTime));
+        }
+    }
+    for (auto& doc : doc_list)
+    {
+        if (!doc.cured.empty())
+        {
+            cout << doc.id << " " << doc.cured.size() << " ";
+            for (auto& sth : doc.cured)
+            {
+                cout << sth.first << " " << sth.second << " ";
+            }
+            cout << endl;
         }
     }
 
-    
     return 0;
 }
